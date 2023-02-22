@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="format-detection" content="telephone=no"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta name="MobileOptimized" content="176"/>
+    <meta name="HandheldFriendly" content="True"/>
+    <meta name="robots" content="noindex,nofollow"/>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <style>
+        body {
+            font-family: sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #222222);
+            font-size: 16px;
+            margin: 0;
+            padding: 0;
+            color-scheme: var(--tg-color-scheme);
+        }
+
+        a {
+            color: var(--tg-theme-link-color, #2678b6);
+        }
+
+        .button {
+            cursor: pointer;
+            font-size: 14px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--tg-theme-button-color, #50a8eb);
+            color: var(--tg-theme-button-text-color, #ffffff);
+        }
+
+        .button:focus{
+        }
+
+        button[disabled] {
+            opacity: 0.6;
+            cursor: auto;
+            pointer-events: none;
+        }
+
+        button.close_btn {
+            /*position: fixed;*/
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 0;
+            margin: 0;
+            padding: 16px 20px;
+            text-transform: uppercase;
+        }
+
+
+        p {
+        }
+
+        ul {
+            text-align: left;
+        }
+
+        li {
+            color: var(--tg-theme-hint-color, #a8a8a8);
+        }
+
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 7px;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, .07);
+            border-radius: 4px;
+            padding: 4px;
+            margin: 7px 0;
+            word-break: break-all;
+            word-break: break-word;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+
+        .dark pre {
+            background: rgba(255, 255, 255, .15);
+        }
+
+        .hint {
+            font-size: .8em;
+            color: var(--tg-theme-hint-color, #a8a8a8);
+        }
+
+        .ok {
+            color: green;
+        }
+
+        .err {
+            color: red;
+        }
+
+        #fixed_wrap {
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            transform: translateY(100vh);
+        }
+
+        .viewport_border,
+        .viewport_stable_border {
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            height: var(--tg-viewport-height, 100vh);
+            pointer-events: none;
+        }
+
+        .viewport_stablaae_border {
+            height: var(--tg-viewport-stable-height, 100vh);
+        }
+
+        .viewport_border:before,
+        .viewport_stable_border:before {
+            content: attr(text);
+            display: inline-block;
+            position: absolute;
+            background: gray;
+            right: 0;
+            top: 0;
+            font-size: 7px;
+            padding: 2px 4px;
+            vertical-align: top;
+        }
+
+        .viewport_stable_border:before {
+            background: green;
+            left: 0;
+            right: auto;
+        }
+
+        .viewport_border:after,
+        .viewport_stable_border:after {
+            content: '';
+            display: block;
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            border: 2px dashed gray;
+        }
+
+        .viewport_stable_border:after {
+            border-color: green;
+        }
+
+        * { box-sizing: border-box; }
+
+        .staggered-list-content {
+        max-width: 90%;
+        margin: 1vw auto;
+        }
+
+        .list {
+        list-style-type: none;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        padding: 0;
+        }
+
+        .list li + li {
+        margin-top: 1rem;
+        }
+        .listItem {
+        background-color: #222222;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        padding: 1rem;
+        }
+
+        .listItem .space{
+            display: none;
+        }
+
+        .listItem.expanded .space{
+            display: flex;
+        }
+
+
+        .avatar {
+        width: 30%;
+        height: auto;
+        border-radius: 100px;
+        margin-right: 2rem;
+        }
+        .listItem.expanded .avatar {
+        width: 80%;
+        height: auto;
+        margin-right: 0;
+        margin-bottom: 1rem;
+        }
+
+
+        .listItem.expanded .description {
+            display: flex;
+            align-items: center;
+            flex-direction: row;
+        }
+        .listItem.expanded {
+        background-color: #222222;
+        padding: 2rem;
+        flex-direction: column;
+        }
+
+        .additional-content {
+        width: 100%;
+        margin-top: 2rem;
+        display: none;
+        text-align: center;
+        }
+        .listItem.expanded .additional-content {
+        display: block;
+        }
+
+
+        .listItem.expanded .chunk {
+        opacity: 1;
+        }
+        .chunk + .chunk {
+        margin-top: 1rem;
+        }
+        
+        .listItem.expanded .button-container{
+            margin: 0;
+            margin-top: 1.5rem;
+            right: 0;
+            margin: auto;
+        }
+
+        .price{
+            color: var(--tg-theme-link-color, #2678b6);
+        }
+
+        .button-container{
+            display: inline-flex;
+            align-items: center;
+            height: max-content;
+
+            position: relative;
+            right: 0px;
+            margin-top: auto;
+            margin-right: 0px;
+            margin-bottom: auto;
+            margin-left: auto;
+        }
+        
+        .count{
+            text-align: center;
+            display: inline-block;
+
+        }
+
+        .count-container{
+            margin: 0 3vw;
+        }
+
+        .clear-button{
+            position: fixed;
+            align-self: center;
+            bottom: 1vh;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 7px 7px #7c7c7c7a;
+            text-align: center;
+        }
+
+        .buy-button{
+            display: inline-block;
+
+        }
+</style>
+</head>
+<section>
+    <div class="staggered-list-content">
+        <ul class="list">
+            {% for product in products %}
+                <li class="listItem">
+                    <div class="avatar">
+                        <img class = "img" width="100%" src="{% if product.image %}{{ product.image }}{% else %} "image/no_image.png" {% endif %}">
+                    </div>
+                    <div class="description">
+                        <p>{{ product.name }}</p>
+                        <p class="space">&nbsp;</p>
+                        <p id="price_{{ product.id }}" class="price">{{ product.price }}р</p>
+                    </div>
+                    <div class="additional-content">
+                        {{ product.description }}
+                    </div>
+                    <iframe name="frame" id="frame" style="display: none;"></iframe>
+                    <div class="button-container">
+                        <div class="buy-button">
+                            <input class="button" data-inline="true"  type="submit" onclick="minus({{ product.id }})" value="-">
+                        </div>
+                        <div class="buy-button count-container">
+                            <p id="count_{{ product.id }}" class="count">0</p>
+                        </div>
+                        <div class="buy-button">
+                            <input class="buy-button button" data-inline="true"  type="submit" onclick="plus({{ product.id }})" value="+">
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+      </div>
+<!--   <div id="blanc" style="height: 200vh;"> </div>
+      <form id="cart" class="buy-button" target="frame">
+        <input class="button clear-button" type="button" onclick="cart_clear()" value="Очистить корзину.">
+    </form>-->   
+</section>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+<script src="https://assets.codepen.io/16327/Flip.min.js"></script>
+<script src="https://webappcontent.telegram.org/js/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+<script>
+    gsap.registerPlugin(Flip);
+
+    const dur = 0.5;
+    let lastItems = [];
+    let lastIndex = -1;
+
+    const listItems = gsap.utils.toArray('.listItem');
+    listItems.forEach((item, i) => {
+    item.addEventListener('click', () => {
+        // Get all content within the clicked item
+        const itemTargets = gsap.utils.toArray(item.querySelectorAll('*'));
+        
+        // Check to see if the item is the same one as the last time
+        const isSameAsLast = i === lastIndex && listItems[lastIndex];
+        
+        // Get all the items that are changing this click
+        const targets = isSameAsLast ? 
+        listItems.concat(itemTargets) 
+        : listItems.concat(itemTargets.concat(lastItems));
+        
+        // grab the current state of the targets (before changing)
+        const state = Flip.getState(targets);
+        // Animate out the last clicked item if it's not the same as the current
+        if(!isSameAsLast && listItems[lastIndex]) {
+        
+        listItems[lastIndex].classList.remove('expanded');
+        }
+
+        // Toggle the display on the clicked item
+        listItems[i].classList.toggle('expanded');
+        
+        Flip.from(state, {
+        duration: dur,
+        ease: "power1.inOut",
+        absolute: true, // make things position: absolute during the flip
+        nested: true,   // we've got nested flipping elements (more expensive processing)
+        // Fade in or out the elements within the item
+        onEnter: elements => gsap.fromTo(elements, {opacity: 0}, {opacity: 1, duration: dur / 2, delay: dur / 2}),
+        onLeave: elements => gsap.fromTo(elements, {opacity: (i, el) => state.getProperty(el, "opacity")}, {opacity: 0, duration: dur / 2}),
+        });
+        
+        // Update our variables
+        lastItems = itemTargets;
+        lastIndex = i;
+    });
+    });
+
+    var amount = 0;
+
+    async function fetchAsync (url) {
+        let response = await fetch(url);
+        let data = await response.json();
+        return data;
+    }   
+
+
+    function minus(product_id){
+        event.stopPropagation(); 
+        if (Number(document.getElementById(`count_${product_id}`).textContent) > 0){
+            amount -= Number(document.getElementById(`price_${product_id}`).textContent.slice(0, -1));
+            tg.MainButton.text = `Подтвердить заказ на ${amount}р.`;
+            document.getElementById(`count_${product_id}`).textContent = Number(document.getElementById(`count_${product_id}`).textContent) - 1;
+
+            fetch(`/users/{{ user_id }}/cart/products/${product_id}`, {
+            method: 'DELETE',
+        }).then(response => response.json())
+        }
+
+    }
+
+    function plus(product_id){
+        event.stopPropagation(); 
+        amount += Number(document.getElementById(`price_${product_id}`).textContent.slice(0, -1));
+        tg.MainButton.text = `Подтвердить заказ на ${amount}р.`;
+        document.getElementById(`count_${product_id}`).textContent = Number(document.getElementById(`count_${product_id}`).textContent) + 1;
+
+        fetch(`/users/{{ user_id }}/cart/products/${product_id}`, {
+            method: 'POST',
+        }).then(response => response.json())
+    }
+
+    async function cart_clear(){
+        amount = 0
+        tg.MainButton.text = `Подтвердить заказ на ${amount}р.`;
+        fetch('/users/{{ user_id }}/cart/', {
+            method: 'DELETE',
+        }).then(response => response.json())
+
+        for (const key in document.getElementsByClassName('count')) {
+            const element = document.getElementsByClassName('count')[key];
+            console.log(element)
+            element.textContent = 0
+        }
+    }
+
+    let tg = window.Telegram.WebApp;
+    
+    tg.MainButton.text = "Подтвердить заказ на 0р.";
+    tg.MainButton.show()
+    Telegram.WebApp.onEvent('mainButtonClicked', function(){
+            fetch('/users/{{ user_id }}/cart/').then(function(response) {
+                    return response.text();
+                }).then(function(data) {
+                    window.Telegram.WebApp.sendData(data);
+                }).catch(function(err) {
+            });
+    });
+</script>
+
+</body>
+</html>
