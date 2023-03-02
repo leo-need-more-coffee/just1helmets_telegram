@@ -5,6 +5,7 @@ from traceback import print_tb
 import requests
 import shutil
 from io import StringIO
+import json
 
 from flask import Flask, jsonify, request, redirect
 from flask import make_response
@@ -13,12 +14,13 @@ import sys, os
 import db
 from cart import Cart, Item
 
+global app
 app = Flask(__name__, static_folder='', template_folder='')
 
 
 class Cart_route:
     @app.route("/users/<int:user_id>/cart/", methods=["GET"])
-    def get_products(user_id):
+    def get_cart(user_id):
         cart = Cart.get(user_id)
         return make_response(jsonify({'cart': cart.json()}), 200)
 
@@ -40,6 +42,7 @@ class Cart_route:
         item.size = size
         item.save()
         return make_response(jsonify({'response': 'ok'}), 200)
+    
 
     @app.route("/items/<int:item_id>", methods=["GET"])
     def get_item(item_id):
@@ -66,10 +69,35 @@ class Cart_route:
 
 
 class Product:
+    @app.route("/products", methods=["POST"])
+    def post_product():
+        data = request.json
+        print(data)
+        Product.add_from_json(data)
+        return make_response(jsonify(product.json()), 200)
+
+    @app.route("/products", methods=["PUT"])
+    def put_product():
+        data = request.json
+        print(data)
+        product = db.Product.get(data['id'])
+        product.edit_from_json(data)
+        product.save()
+        return make_response(jsonify(product.json()), 200)
+
     @app.route("/products/<int:id>", methods=["GET"])
     def get_product(id):
-        item = db.Product.get(id)
-        return make_response(jsonify(item.json()), 200)
+        product = db.Product.get(id)
+        return make_response(jsonify(product.json()), 200)
+    
+    @app.route("/products/", methods=["GET"])
+    def get_products():
+        products = db.Product.all()
+        if 'page' in request.args and 'count' in request.args:
+            page = int(request.args['page'])
+            count = int(request.args['count'])
+            products = products[page*count:(page + 1)*count]
+        return make_response(jsonify(products.json()), 200)
 
 class Category:
     @app.route("/categories/", methods=["GET"])

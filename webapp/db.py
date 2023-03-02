@@ -13,12 +13,17 @@ class ProductList:
     def __init__(self, products):
         self.products = products
 
-    def __getitem__(self, i):
-        return self.products[i]
+    def __getitem__(self, sub):
+        if isinstance(sub, slice):
+            return ProductList(self.products[sub])
+        return self.products[sub]
+            
 
     def __len__(self):
         return len(self.products)
 
+    def json(self):
+        return [el.json() for el in self.products]
 
 class Product:
     def __init__(self, id:int, name:str=None, description:str=None, image:str=None, price:int=None, categories:int=0, sizes:list = []):
@@ -33,7 +38,7 @@ class Product:
     def save(self):
         conn = sqlite3.connect(db_name)
         conn.execute("UPDATE products SET id = ?, name = ?, description = ?, image = ?, price = ?, categories = ?, sizes = ? WHERE id == ?",
-            [self.id, self.name, self.description, self.image, self.price, self.categories, json.dumps(self.sizes)])
+            [self.id, self.name, self.description, self.image, self.price, self.categories, json.dumps(self.sizes), self.id])
         conn.commit()
         conn.close()
 
@@ -54,9 +59,30 @@ class Product:
             "categories": self.categories,
             "sizes": self.sizes,
         }
+    
+    def edit_from_json(self, data):
+        self.id = data['id']
+        self.name = data['name']
+        self.description = data['description']
+        self.image = data['image']
+        self.price = data['price']
+        self.categories = data['categories']
+        self.sizes = data['sizes']
+
+
+    def add_from_json(data):
+        name = data['name'] if 'name' in data else None
+        description = data['description'] if 'description' in data else None
+        image = data['image'] if 'image' in data else None
+        price = data['price'] if 'price' in data else None
+        categories = data['categories'] if 'categories' in data else 0
+        sizes = data['sizes'] if 'sizes' in data else []
+
+        return Product.add(name, description, image, price, categories, sizes)
 
     def add(name:str=None, description:str=None, image:str=None, price:int=None, categories:int=0, sizes:list = []):
-        id = max([el.id for el in items]) + 1 if len(items) > 0 else 0
+        products = Product.all()
+        id = max([el.id for el in products]) + 1 if len(products) > 0 else 0
 
         conn = sqlite3.connect(db_name)
         conn.execute("INSERT INTO products (id, name, description, image, price, categories, sizes) \
@@ -98,7 +124,6 @@ class Product:
             rows.append(Product(id, name, description, image, price, categories, json.loads(sizes)))
         conn.close()
         return ProductList(rows)
-
 
 class CategoryList:
     def __init__(self, categories):
