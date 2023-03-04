@@ -20,6 +20,34 @@ admins_id = [231843950]
 def is_state(chat_id, state_name):
     return state_name is None or (fsm.State.get(chat_id) and (state:=fsm.State.get(chat_id)).state == state_name)
 
+def cart_to_text(user_id):
+    cart = requests.get(f'{url}/users/{user_id}/cart/').json()
+    msg = ""
+    amount = 0
+    for el in cart['cart']['items']:
+        product_id = el['product_id']
+        product = requests.get(f'{url}/products/{product_id}').json()
+        msg += product["name"] + "(" + str(el['size']) + ") - " + str(product["price"]) + "р\n"
+        amount += product["price"] 
+    msg+=f"\nИтого: {amount}"
+
+    return msg
+
+def product_message(product_id):
+    product = requests.get(f'{url}/products/{product_id}').json()
+    name, description, price, sizes, image, category = product['name'], product['description'], product['price'], product['sizes'], product['image'], product['categories']
+    sizes_ = ''.join([f'{el}, ' for el in sizes])[:-2]
+
+    if len(description)-1 <= 200:
+        description_ = description
+    else:
+        q=200
+        while description[q] != ' ' and q>=0: 
+            q-=1 
+        description_ = description[:q] + '...'
+
+    msg = f'Название: {name}\nОписание: {description_}\nЦена: {price}\nРазмеры: {sizes_}\nКатегория: {category} (список категорий /categories_list)'
+    return msg, image
 
 def admin(func):
     def inner(message):
@@ -68,12 +96,24 @@ def Confirm(user_id):
 def EditProduct(product_id):
     inline_keyboard = InlineKeyboardMarkup()
     inline_keyboard.add(InlineKeyboardButton(text="Изменить название", callback_data=json.dumps({"product_id": product_id, "product_change": "name"})))
-    inline_keyboard.add(InlineKeyboardButton(text="Изменить описание(максимум 400 символов)", callback_data=json.dumps({"product_id": product_id, "product_change": "description"})))
-    inline_keyboard.add(InlineKeyboardButton(text="Изменить картинку(только ссылки)", callback_data=json.dumps({"product_id": product_id, "product_change": "image"})))
-    inline_keyboard.add(InlineKeyboardButton(text="Изменить цену", callback_data=json.dumps({"product_id": product_id, "product_change": "price"})))
-    inline_keyboard.add(InlineKeyboardButton(text="Изменить размеры", callback_data=json.dumps({"product_id": product_id, "product_change": "sizes"})))
+    inline_keyboard.add(InlineKeyboardButton(text="Изменить описание (максимум 400 символов)", callback_data=json.dumps({"product_id": product_id, "product_change": "description"})))
+    inline_keyboard.add(InlineKeyboardButton(text="Изменить картинку (только ссылки)", callback_data=json.dumps({"product_id": product_id, "product_change": "image"})))
+    inline_keyboard.add(InlineKeyboardButton(text='Изменить цену (только число, без "р")', callback_data=json.dumps({"product_id": product_id, "product_change": "price"})))
+    inline_keyboard.add(InlineKeyboardButton(text="Изменить размеры (вводить без запятых через пробел)", callback_data=json.dumps({"product_id": product_id, "product_change": "sizes"})))
+    inline_keyboard.add(InlineKeyboardButton(text="Изменить категорию (вводить номер категории, не название)", callback_data=json.dumps({"product_id": product_id, "product_change": "categories"})))
+    inline_keyboard.add(InlineKeyboardButton(text="❌Удалить товар❌", callback_data=json.dumps({"product_id": product_id, "product_delete": True})))
 
     return inline_keyboard
+
+@bot.callback_query_handler(func=lambda call: 'product_delete' in call.data)
+def button_callback_handler(call):
+    data = json.loads(call.data)
+    product_id = data['product_id']
+
+    requests.delete(f'{url}/products/{product_id}')
+    bot.edit_message_caption(caption=f'[ТОВАР УДАЛЕН]\n\n{call.message.caption}', chat_id=call.message.chat.id, message_id=call.message.id, reply_markup=EditProduct(product_id))
+    bot.send_message(call.message.chat.id, f"Товар удален.")
+
 
 @bot.callback_query_handler(func=lambda call: 'product_change' in call.data)
 def button_callback_handler(call):
@@ -97,19 +137,13 @@ def send_welcome(message):
     state.delete()
 
     product = requests.get(f'{url}/products/{product_id}').json()
-    name, description, price, sizes, image = product['name'], product['description'], product['price'], product['sizes'], product['image']
-    sizes_ = ''.join([f'{el}, ' for el in sizes])[:-2]
-    q=min(200, len(description)-1)
-    while description[q] != ' ' and q>=0:
-        q-=1 
-
-    description_ = description[:q]
-    print(product)
-    msg = f'Название: {name}\nОписание: {description_}...\nЦена: {price}\nРазмеры: {sizes_}'
+    msg, image = product_message(product_id)
     if data['product_change'] != 'image':
         bot.edit_message_caption(caption=msg, chat_id=message.chat.id, message_id=data['message_id'], reply_markup=EditProduct(product_id))
+        bot.send_message(message.chat.id, f"Успешно!")
     else:
-        bot.edit_message_media(media=telebot.types.InputMediaPhoto('https://static.tildacdn.com/tild3166-3030-4432-a263-613739363536/J1_Orange_SX.png'), chat_id=message.chat.id, message_id=data['message_id'])
+        bot.edit_message_media(media=telebot.types.InputMediaPhoto(image, caption=msg), chat_id=message.chat.id, message_id=data['message_id'], reply_markup=EditProduct(product_id))
+        bot.send_message(message.chat.id, f"Успешно!")
 
 def ProductList(page=0, count=10):
     inline_keyboard = InlineKeyboardMarkup(row_width=1)
@@ -132,36 +166,19 @@ def button_callback_handler(call):
     data = json.loads(call.data)
     page = data['product_list_page']
     bot.edit_message_text(f"Каталог. Страница {page + 1}:", call.message.chat.id, call.message.id, reply_markup=ProductList(page, count=data['count']))
+    bot.answer_callback_query(callback_query_id=call.id)
 
 
 @bot.callback_query_handler(func=lambda call: 'product_id' in call.data)
 def button_callback_handler(call):
     data = json.loads(call.data)
     product_id = data['product_id']
-    product = requests.get(f'{url}/products/{product_id}').json()
-    name, description, price, sizes, image = product['name'], product['description'], product['price'], product['sizes'], product['image']
-    sizes_ = ''.join([f'{el}, ' for el in sizes])[:-2]
-    q=min(200, len(description)-1)
-    while description[q] != ' ' and q>=0:
-        q-=1 
+    msg, image = product_message(product_id)
 
-    description_ = description[:q]
-    print(description_, q)
-    msg = f'Название: {name}\nОписание: {description_}...\nЦена: {price}\nРазмеры: {sizes_}'
     bot.send_photo(call.message.chat.id, image, caption=msg, reply_markup=EditProduct(product_id))
+    bot.answer_callback_query(callback_query_id=call.id)
 
-def cart_to_text(user_id):
-    cart = requests.get(f'{url}/users/{user_id}/cart/').json()
-    msg = ""
-    amount = 0
-    for el in cart['cart']['items']:
-        product_id = el['product_id']
-        product = requests.get(f'{url}/products/{product_id}').json()
-        msg += product["name"] + "(" + str(el['size']) + ") - " + str(product["price"]) + "р\n"
-        amount += product["price"] 
-    msg+=f"\nИтого: {amount}"
 
-    return msg
 
 
 @bot.callback_query_handler(func=lambda call: 'user_id' in call.data)
@@ -257,8 +274,29 @@ def answer(webAppMes):
 def send_welcome(message):
     bot.reply_to(message, "Каталог. Страница 1:", reply_markup=ProductList())
 
+@bot.message_handler(commands=['categories_list'])
+def send_welcome(message):
+    categories = requests.get(f'{url}/categories/').json()
+    msg = ""
+    for i, category in enumerate(categories):
+        name = category['name']
+        msg += f'{i} - {name}\n'
+    bot.reply_to(message, msg)
 
 
+@bot.message_handler(commands=['add_product'])
+def send_welcome(message):
+    data = {
+        "name": "ИМЯ ТОВАРА",
+        "description": "ОПИСАНИЕ ",
+        "image": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.u2GosUQwlXG2QbkJopudIQHaE6%26pid%3DApi&f=1&ipt=524401fdcdda55a13f62bf577113e6569f3e3adca94055009a190c9662625985&ipo=images",
+        "price": 0,
+        "categories": 0,
+        "sizes": []
+    }
+    product = requests.post(f'{url}/products', json=data).json()
+    msg, image = product_message(product['id'])
+    bot.send_photo(message.chat.id, image, caption=msg, reply_markup=EditProduct(product['id']))
 
 if __name__ == "__main__":
     bot.infinity_polling()

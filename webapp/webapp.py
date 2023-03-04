@@ -56,7 +56,7 @@ class Cart_route:
         return make_response(jsonify({'response': 'ok'}), 200)
 
     @app.route("/users/<int:user_id>/cart/products/<int:product_id>", methods=["DELETE"])
-    def delete_product(user_id, product_id):
+    def delete_product_from_cart(user_id, product_id):
         cart = Cart.get(user_id)
         cart.delete_product(product_id)
         return make_response(jsonify({'response': 'ok'}), 200)
@@ -72,17 +72,21 @@ class Product:
     @app.route("/products", methods=["POST"])
     def post_product():
         data = request.json
-        print(data)
-        Product.add_from_json(data)
+        product = db.Product.add_from_json(data)
         return make_response(jsonify(product.json()), 200)
 
     @app.route("/products", methods=["PUT"])
     def put_product():
         data = request.json
-        print(data)
         product = db.Product.get(data['id'])
         product.edit_from_json(data)
         product.save()
+        return make_response(jsonify(product.json()), 200)
+
+    @app.route("/products/<int:id>", methods=["DELETE"])
+    def delete_product(id):
+        product = db.Product.get(id)
+        product.delete()
         return make_response(jsonify(product.json()), 200)
 
     @app.route("/products/<int:id>", methods=["GET"])
