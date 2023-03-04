@@ -13,7 +13,7 @@ import fsm
 
 bot = telebot.TeleBot("6003211846:AAEjXt3qDu1df4zXEZT0OF41a0cCzyIBlYQ", parse_mode=None)
 
-url = 'https://5db2-37-19-1-156.eu.ngrok.io'
+url = 'https://just1helmets-webapp.pzrnqt1vrss.xyz'
 admins_id = [231843950]
 
 
