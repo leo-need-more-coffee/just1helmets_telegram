@@ -115,10 +115,10 @@ def EditProduct(product_id):
 @bot.message_handler(func=lambda message: is_state(message.chat.id, 'request_contact'), content_types=['contact'])
 def contact_handler(message):
     print(message.json)
-    msg = bot.send_message(231843950, f"Новый заказ:\n{cart_to_text(message.chat.id)}")
+    msg = bot.send_message(524558139, f"Новый заказ:\n{cart_to_text(message.chat.id)}")
     contact = message.json['contact']
     del contact['user_id']
-    bot.send_contact(231843950, **contact, reply_to_message_id=msg.id)
+    bot.send_contact(524558139, **contact, reply_to_message_id=msg.id)
 
     fsm.State.delete(message.chat.id)
     requests.delete(f'{url}/users/{ message.chat.id }/cart/').json()
