@@ -75,7 +75,7 @@ def webAppKeyboard(user_id): #создание клавиатуры с webapp к
 
 def RequestContact():
     keyboard = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    reg_button = types.KeyboardButton(text="Share your phone number", request_contact=True)
+    reg_button = types.KeyboardButton(text="Поделиться контактом", request_contact=True)
     keyboard.add(reg_button)
     return keyboard
 
@@ -110,6 +110,17 @@ def EditProduct(product_id):
     inline_keyboard.add(InlineKeyboardButton(text="❌Удалить товар❌", callback_data=json.dumps({"product_id": product_id, "product_delete": True})))
 
     return inline_keyboard
+
+
+@bot.message_handler(content_types=['contact'], func=lambda message: is_state(message.chat.id, 'request_contact'))
+def contact_handler(message):
+    bot.reply_to(message, "Успешно! С вами свяжется администратор.", reply_markup=webAppKeyboard(message.from_user.id))
+
+
+@bot.message_handler(func=lambda message: is_state(message.chat.id, 'request_contact'))
+def contact_handler(message):
+    bot.reply_to(message, 'Пожалуйста, нажмите кнопку "Поделиться контактом"', reply_markup=webAppKeyboard(message.from_user.id))
+
 
 @bot.callback_query_handler(func=lambda call: 'product_delete' in call.data)
 def button_callback_handler(call):
@@ -307,8 +318,3 @@ def send_welcome(message):
 
 if __name__ == "__main__":
     bot.infinity_polling()
-
-
-@bot.message_handler(content_types=['contact'], func=lambda message: is_state(message.chat.id, 'request_contact'))
-def contact_handler(message):
-    print(message.contact.phone_number)
