@@ -73,6 +73,12 @@ def webAppKeyboard(user_id): #создание клавиатуры с webapp к
 
     return keyboard
 
+def RequestContact():
+    keyboard = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+    reg_button = types.KeyboardButton(text="Share your phone number", request_contact=True)
+    keyboard.add(reg_button)
+    return keyboard
+
 def ChooseSize(item_id, sizes):
     inline_keyboard = InlineKeyboardMarkup()
     buttons = [InlineKeyboardButton(text="❌", callback_data=json.dumps({"item_id": item_id, "item_do":"__remove__"}))]
@@ -188,7 +194,7 @@ def button_callback_handler(call):
 
     if data['user_do'] == 'confirm':
         requests.delete(f'{url}/users/{ call.message.chat.id }/cart/').json()
-        bot.send_message(call.message.chat.id, f"Успешно! С вами свяжется администратор.")
+        bot.send_message(call.message.chat.id, f"Успешно! Пожалуйста, отправьте ваш контакт, чтобы с вами мог связаться наш администратор.", reply_markup=RequestContact())
         bot.edit_message_text(f"Подтверждено✅", call.message.chat.id, call.message.id)
 
         #TODO
@@ -300,3 +306,8 @@ def send_welcome(message):
 
 if __name__ == "__main__":
     bot.infinity_polling()
+
+
+@bot.message_handler(content_types=['contact'])
+def contact_handler(message):
+    print(message.contact.phone_number)
