@@ -14,7 +14,7 @@ import fsm
 bot = telebot.TeleBot("6003211846:AAEjXt3qDu1df4zXEZT0OF41a0cCzyIBlYQ", parse_mode=None)
 
 url = 'https://just1helmets-webapp.pzrnqt1vrss.xyz'
-admins_id = [231843950]
+admins_id = [231843950, 524558139]
 
 
 def is_state(chat_id, state_name):
