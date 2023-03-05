@@ -112,7 +112,7 @@ def EditProduct(product_id):
     return inline_keyboard
 
 
-@bot.message_handler(content_types=['contact'], func=lambda message: is_state(message.chat.id, 'request_contact'))
+@bot.message_handler(func=lambda message: is_state(message.chat.id, 'request_contact'), content_types=['contact'])
 def contact_handler(message):
     bot.reply_to(message, "Успешно! С вами свяжется администратор.", reply_markup=webAppKeyboard(message.from_user.id))
 
