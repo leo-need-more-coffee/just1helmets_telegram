@@ -116,7 +116,7 @@ def EditProduct(product_id):
 def contact_handler(message):
     print(message)
     msg = bot.send_message(231843950, f"Новый заказ:\n{cart_to_text(message.chat.id)}")
-    bot.send_contact(231843950, **message.contact)
+    bot.send_contact(231843950, **dict(message.contact))
 
     fsm.State.delete(message.chat.id)
 
