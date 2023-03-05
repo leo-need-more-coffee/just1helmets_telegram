@@ -197,6 +197,7 @@ def button_callback_handler(call):
         bot.send_message(call.message.chat.id, f"Успешно! Пожалуйста, отправьте ваш контакт, чтобы с вами мог связаться наш администратор.", reply_markup=RequestContact())
         bot.edit_message_text(f"Подтверждено✅", call.message.chat.id, call.message.id)
 
+        fsm.State.set(call.message.chat.id, 'request contact')
         #TODO
 
     if data['user_do'] == 'deny':
@@ -308,6 +309,6 @@ if __name__ == "__main__":
     bot.infinity_polling()
 
 
-@bot.message_handler(content_types=['contact'])
+@bot.message_handler(content_types=['contact'], func=lambda message: is_state(message.chat.id, 'request_contact'))
 def contact_handler(message):
     print(message.contact.phone_number)
