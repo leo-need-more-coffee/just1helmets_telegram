@@ -119,7 +119,7 @@ def contact_handler(message):
 
 @bot.message_handler(func=lambda message: is_state(message.chat.id, 'request_contact'))
 def contact_handler(message):
-    bot.reply_to(message, 'Пожалуйста, нажмите кнопку "Поделиться контактом"', reply_markup=webAppKeyboard(message.from_user.id))
+    bot.reply_to(message, 'Пожалуйста, нажмите кнопку "Поделиться контактом"', reply_markup=RequestContact())
 
 
 @bot.callback_query_handler(func=lambda call: 'product_delete' in call.data)
