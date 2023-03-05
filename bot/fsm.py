@@ -27,6 +27,14 @@ class State:
         return State(chat_id, state, data)
 
 
+    def delete(chat_id):
+        conn = sqlite3.connect(db_name)
+        conn.execute("DELETE FROM states\
+                WHERE chat_id == ?", [chat_id])
+        conn.commit()
+        conn.close()
+
+
     def delete(self):
         conn = sqlite3.connect(db_name)
         conn.execute("DELETE FROM states\

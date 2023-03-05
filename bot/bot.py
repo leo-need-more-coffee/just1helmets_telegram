@@ -121,7 +121,6 @@ def contact_handler(message):
     bot.send_contact(231843950, **contact)
 
     fsm.State.delete(message.chat.id)
-
     requests.delete(f'{url}/users/{ message.chat.id }/cart/').json()
 
     bot.reply_to(message, "Успешно! С вами свяжется администратор.", reply_markup=webAppKeyboard(message.from_user.id))
