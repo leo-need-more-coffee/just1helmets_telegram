@@ -114,7 +114,7 @@ def EditProduct(product_id):
 
 @bot.message_handler(func=lambda message: is_state(message.chat.id, 'request_contact'), content_types=['contact'])
 def contact_handler(message):
-    print(message)
+    print(message.json())
     msg = bot.send_message(231843950, f"Новый заказ:\n{cart_to_text(message.chat.id)}")
     bot.send_contact(231843950, **message.json()['contact'])
 
