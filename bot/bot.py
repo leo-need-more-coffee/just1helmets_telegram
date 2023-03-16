@@ -154,7 +154,9 @@ def send_welcome(message):
     data = state.data
 
     product_id = data['product_id']
-    product = requests.get(f'{url}/products/{product_id}').json()
+    product = requests.get(f'{url}/products/{product_id}')
+    print(product)
+    product = product.json()
     if data['product_change'] == 'sizes':
         product[data['product_change']] =list(message.text.split())
     else:
